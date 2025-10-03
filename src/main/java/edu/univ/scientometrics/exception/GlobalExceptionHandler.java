@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import edu.univ.scientometrics.exception.DatabaseException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -32,5 +33,22 @@ public class GlobalExceptionHandler {
         body.put("message", ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+    }
+
+    /**
+     * Handles database-related exceptions.
+     * Returns 500 Internal Server Error with database error details.
+     */
+    @ExceptionHandler(DatabaseException.class)
+    public ResponseEntity<Map<String, Object>> handleDatabaseException(DatabaseException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+        body.put("error", "Database Error");
+        body.put("message", ex.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(body);
     }
 }

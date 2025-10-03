@@ -4,6 +4,8 @@ import edu.univ.scientometrics.exception.ApiException;
 import edu.univ.scientometrics.model.ApiResponseRecord;
 import edu.univ.scientometrics.model.PublicationRecord;
 import edu.univ.scientometrics.model.SearchMetadata;
+import edu.univ.scientometrics.repository.ArticleRepository;
+import edu.univ.scientometrics.repository.ResearcherRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,6 +18,9 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import edu.univ.scientometrics.repository.ArticleRepository;
+import edu.univ.scientometrics.repository.ResearcherRepository;
+
 
 @ExtendWith(MockitoExtension.class)
 class AuthorServiceImplTest {
@@ -23,11 +28,18 @@ class AuthorServiceImplTest {
     @Mock
     private ApiClient apiClient;
 
+    @Mock
+    private ArticleRepository articleRepository;  // NUEVO
+
+    @Mock
+    private ResearcherRepository researcherRepository;  // NUEVO
+
     private AuthorServiceImpl authorService;
 
     @BeforeEach
     void setUp() {
-        authorService = new AuthorServiceImpl(apiClient);
+        // Ahora con 3 parámetros
+        authorService = new AuthorServiceImpl(apiClient, articleRepository, researcherRepository);
     }
 
     @Test

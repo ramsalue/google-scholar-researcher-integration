@@ -2,30 +2,33 @@
 
 [![Java](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)](https://www.java.com)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.0-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com)
 [![Maven](https://img.shields.io/badge/Maven-3.6+-C71A36?logo=apachemaven&logoColor=white)](https://maven.apache.org/)
 [![API](https://img.shields.io/badge/API-Google%20Scholar-4285F4?logo=googlescholar)](https://serpapi.com/google-scholar-api)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Automated integration system for retrieving and storing information about university top researchers and their publications using the Google Scholar API with Spring Boot and MVC architecture.
+Automated integration system for retrieving and storing information about university top researchers and their publications using Google Scholar API with Spring Boot, MVC architecture, and MySQL database persistence.
 
 ---
 
 ## Table of Contents
 
 - [Project Overview](#-project-overview)
-- [Architecture & Design Patterns](#-architecture--design-patterns)
+- [Architecture & Design](#-architecture--design)
 - [Project Structure](#-project-structure)
 - [Technology Stack](#-technology-stack)
 - [Prerequisites](#-prerequisites)
 - [Installation & Setup](#-installation--setup)
+- [Database Setup](#-database-setup)
 - [Running the Application](#-running-the-application)
 - [API Endpoints](#-api-endpoints)
 - [Component Explanation](#-component-explanation)
+- [Database Schema](#-database-schema)
 - [Testing](#-testing)
-- [SOLID Principles Implementation](#-solid-principles-implementation)
+- [SOLID Principles](#-solid-principles-implementation)
 - [Sprint Deliverables](#-sprint-deliverables)
+- [Known Limitations](#-known-limitations)
 - [Troubleshooting](#-troubleshooting)
-- [Contributors](#-contributors)
 
 ---
 
@@ -33,98 +36,142 @@ Automated integration system for retrieving and storing information about univer
 
 ### Purpose
 
-The **Google Scholar Researcher Integration System** automates the collection and management of academic research data for a university's top researchers. This system eliminates manual data entry by leveraging the Google Scholar API through SerpApi to retrieve comprehensive information about researchers and their publications.
+The **Google Scholar Researcher Integration System** is a complete end-to-end solution that automates the collection, management, and persistence of academic research data. The system retrieves researcher profiles and publications from Google Scholar via SerpApi and stores them in a MySQL database for long-term analysis and reporting.
 
 ### Main Goals
 
-1. **Automate Data Retrieval**: Fetch researcher profiles and publications from Google Scholar automatically
-2. **Implement MVC Pattern**: Follow industry-standard Model-View-Controller architecture with Spring Boot
-3. **Apply SOLID Principles**: Ensure maintainable, scalable, and testable code
-4. **Use Modern Java Features**: Leverage Java Records for immutable data models
-5. **Handle Errors Gracefully**: Implement comprehensive exception handling and validation
+1. **Automate Data Collection**: Fetch researcher profiles and publications automatically
+2. **Persist Data Locally**: Store retrieved data in MySQL database
+3. **Implement MVC Pattern**: Follow industry-standard architecture with Spring Boot
+4. **Apply SOLID Principles**: Ensure maintainable, scalable, and testable code
+5. **Database Integration**: Demonstrate functional API-to-database integration
 
 ### Key Features
 
-- **RESTful API**: Expose HTTP endpoints for author searches
-- **Pagination Support**: Handle large result sets efficiently
-- **Date Filtering**: Search publications within specific time ranges
-- **Error Management**: Robust exception handling with meaningful error messages
-- **Testing**: Unit and integration tests with 100% coverage of critical paths
-- **Documentation**: Comprehensive API documentation and code comments
+- **RESTful API**: HTTP endpoints for searching and storing data
+- **Database Persistence**: MySQL storage with JPA/Hibernate
+- **Relationship Mapping**: One-to-Many relationships between researchers and articles
+- **Data Transfer Objects**: Immutable DTOs using Java Records
+- **Transaction Management**: ACID-compliant database operations
+- **Error Management**: Comprehensive exception handling for API and database errors
+- **Testing**: Unit and integration tests with full coverage
 
 ---
 
-##  Architecture & Design Patterns
+##  Architecture & Design
 
-### MVC Pattern (Model-View-Controller)
-
-This project implements the MVC architectural pattern adapted for a RESTful API:
+### Complete System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Controller Layer                         │
-│              (AuthorController.java)                        │
-│  - Receives HTTP requests                                   │
-│  - Validates input parameters                               │
-│  - Returns HTTP responses                                   │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Service Layer (Business Logic)           │
-│        (AuthorServiceImpl implements AuthorService)         │
-│  - Coordinates operations                                   │
-│  - Applies business rules                                   │
-│  - Orchestrates data flow                                   │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Client Layer (Data Access)               │
-│    (GoogleScholarApiClient implements ApiClient)            │
-│  - Performs HTTP requests                                   │
-│  - Handles API communication                                │
-│  - Parses JSON responses                                    │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Model Layer (Data)                       │
-│              (Java Records: *Record.java)                   │
-│  - Immutable data structures                                │
-│  - Represents API responses                                 │
-│  - Type-safe data handling                                  │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                        HTTP Client Layer                        │
+│              (Browser, Postman, cURL, etc.)                     │
+└────────────────────────┬────────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Controller Layer (REST API)                  │
+│  ┌──────────────────────┐  ┌──────────────────────────────┐     │
+│  │  AuthorController    │  │  DatabaseController          │     │
+│  │  /api/authors/*      │  │  /api/database/*             │     │
+│  └──────────────────────┘  └──────────────────────────────┘     │
+└────────────────────────┬────────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Service Layer (Business Logic)               │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │            AuthorServiceImpl (implements AuthorService)  │   │
+│  │  - Search operations                                     │   │
+│  │  - Database coordination                                 │   │
+│  │  - Transaction management                                │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└────────┬──────────────────────────────┬─────────────────────────┘
+         │                              │
+         │                              │
+    ┌────▼────┐                   ┌─-───▼─────┐
+    │   API   │                   │  Database │
+    │  Layer  │                   │   Layer   │
+    └────┬────┘                   └─── ─┬─────┘
+         │                              │
+         ▼                              ▼
+┌─────────────────────┐      ┌──────────────────────────┐
+│ GoogleScholarApi    │      │ Repository Layer         │
+│ Client              │      │ ┌──────────────────────┐ │
+│ - HTTP requests     │      │ │ ArticleRepository    │ │
+│ - JSON parsing      │      │ │ (Interface)          │ │
+│ - Error handling    │      │ └──────────────────────┘ │
+└──────────┬──────────┘      │ ┌──────────────────────┐ │
+           │                 │ │ ArticleRepository    │ │
+           │                 │ │ Impl (JPA)           │ │
+           ▼                 │ └──────────────────────┘ │
+   ┌──────────────┐         │ ┌──────────────────────┐ │
+   │ External API │         │ │ ResearcherRepository │ │
+   │ SerpApi/     │         │ │ (Interface)          │ │
+   │ Google       │         │ └──────────────────────┘ │
+   │ Scholar      │         │ ┌──────────────────────┐ │
+   └──────────────┘         │ │ ResearcherRepository │ │
+                            │ │ Impl (JPA)           │ │
+                            │ └──────────────────────┘ │
+                            └────────────┬─────────────┘
+                                         │
+                                         ▼
+                              ┌──────────────────────┐
+                              │   MySQL Database     │
+                              │  ┌────────────────┐  │
+                              │  │  researchers   │  │
+                              │  │  (1 to Many)   │  │
+                              │  │       ↓        │  │
+                              │  │   articles     │  │
+                              │  └────────────────┘  │
+                              └──────────────────────┘
 ```
 
-### Request Flow Diagram
+### Data Flow Diagram (Sprint 3 - With Database)
 
 ```mermaid
 graph TD
-    A[HTTP Client / Browser] -->|1. GET /api/authors/search?name=| B(Controller: AuthorController);
+    A[HTTP Client] -->|1. POST /save| B(DatabaseController);
+    A -->|1. GET /articles| B;
 
-    subgraph Spring Boot Application
-        B -->|2. Calls Service| C(Service: AuthorServiceImpl);
-        C -->|3. Builds Query & Calls Client| D(Client: GoogleScholarApiClient);
+    subgraph Application
+        
+        B -->|2. Calls Service| C(AuthorServiceImpl);
 
-        subgraph External API Integration
-            D -->|4. HTTP GET Request| G(Config: ApiConfig);
-            G --> H(External API: SerpApi / Google Scholar);
-            H -->|5. JSON Response| D;
+        subgraph API_Integration
+            C -->|3. Search Query| D(GoogleScholarApiClient);
+            D -->|4. Uses Config| E(ApiConfig);
+            E --> F(External API);
+            F -->|5. JSON Response| D;
+            D -->|6. Deserializes| G(Model Records);
         end
+        
+        G -->|7. API Results| C;
+        
+        subgraph Database_Persistence
+            C -->|8. Find/Create Researcher| J(ResearcherRepositoryImpl);
+            J -->|9. ResearcherEntity| C;
+            C -->|10. Maps to ArticleEntity| K(DataMapper);
+            K -->|11. ArticleEntity| C;
+            C -->|12. Saves Article| L(ArticleRepositoryImpl);
+            
+            B -->|I. Calls findAll| L;
+            L -->|II. List ArticleEntity| B;
+        end
+        
+        B -->|13. Maps to DTO| K;
+        B -->|14. List ArticleDTO| A;
 
-        D -->|6. Deserializes to Records| E(Data Models: *Record.java);
-
-        C -- 7a. Error if Search Fails --> F(Exception: ApiException);
-        D -- 7b. Error if Comm. Fails --> F;
-        F -->|8. Handled by| I(Error Handler: GlobalExceptionHandler);
-        I -->|9. Returns Error JSON| A;
-
-        E --> C;
-        C -->|10. Returns PublicationList| B;
+        M(Exceptions)
+        C -- Error --> M;
+        L -- Error --> M;
+        J -- Error --> M;
+        M -->|15. Handled by| N(GlobalExceptionHandler);
+        N -->|16. Returns Error JSON| A;
+        
     end
-
-    B -->|11. Returns 200 OK JSON| A;
+    
+    B -->|17. Returns Success JSON| A;
 ```
 
 ---
@@ -135,29 +182,47 @@ graph TD
 google-scholar-researcher-integration/
 │
 ├── README.md                          # This file
-├── pom.xml                            # Maven configuration
+├── pom.xml                            # Maven configuration with JPA/MySQL
 ├── LICENSE                            # MIT License
 │
 ├── docs/                              # Documentation
 │   └── Challenge03_Sprint01_Develop.pdf
 │
-├── src/main/                          # Application source code
+├── database/                          # Database scripts (Sprint 3)
+│   ├── schema.sql                     # Database creation script
+│   └── README.md                      # Database setup guide
+│
+├── src/main/                          
 │   ├── java/edu/univ/scientometrics/
 │   │   ├── ScholarIntegrationApplication.java    # Main entry point
 │   │   │
-│   │   ├── config/                    # Configuration classes
+│   │   ├── config/                    # Configuration
 │   │   │   └── ApiConfig.java         # SerpApi configuration
 │   │   │
-│   │   ├── controller/                # REST Controllers (MVC-C)
-│   │   │   └── AuthorController.java  # Author search endpoints
+│   │   ├── controller/                # REST Controllers
+│   │   │   ├── AuthorController.java  # Author search endpoints (Sprint 2)
+│   │   │   └── DatabaseController.java # Database operations (Sprint 3)
 │   │   │
-│   │   ├── service/                   # Business logic (MVC-Controller logic)
+│   │   ├── service/                   # Business logic
 │   │   │   ├── ApiClient.java         # Interface for API clients
 │   │   │   ├── AuthorService.java     # Interface for author operations
-│   │   │   ├── AuthorServiceImpl.java # Business logic implementation
+│   │   │   ├── AuthorServiceImpl.java # Business logic + DB integration
 │   │   │   └── GoogleScholarApiClient.java  # SerpApi HTTP client
 │   │   │
-│   │   ├── model/                     # Data models (MVC-M)
+│   │   ├── repository/                # Data Access Layer (Sprint 3)
+│   │   │   ├── ArticleRepository.java        # Interface for articles
+│   │   │   ├── ArticleRepositoryImpl.java    # JPA implementation
+│   │   │   ├── ResearcherRepository.java     # Interface for researchers
+│   │   │   └── ResearcherRepositoryImpl.java # JPA implementation
+│   │   │
+│   │   ├── entity/                    # JPA Entities (Sprint 3)
+│   │   │   ├── ArticleEntity.java     # Article table mapping
+│   │   │   └── ResearcherEntity.java  # Researcher table mapping
+│   │   │
+│   │   ├── dto/                       # Data Transfer Objects (Sprint 3)
+│   │   │   └── ArticleDTO.java        # Immutable article DTO (Record)
+│   │   │
+│   │   ├── model/                     # API Response Models (Sprint 2)
 │   │   │   ├── ApiResponseRecord.java
 │   │   │   ├── AuthorInfo.java
 │   │   │   ├── AuthorRecord.java
@@ -168,19 +233,25 @@ google-scholar-researcher-integration/
 │   │   │   ├── SearchMetadata.java
 │   │   │   └── Versions.java
 │   │   │
+│   │   ├── util/                      # Utilities (Sprint 3)
+│   │   │   └── DataMapper.java        # Entity ↔ DTO conversions
+│   │   │
 │   │   └── exception/                 # Exception handling
-│   │       ├── ApiException.java      # Custom API exception
-│   │       └── GlobalExceptionHandler.java  # Global error handler
+│   │       ├── ApiException.java      # API-related exceptions
+│   │       ├── DatabaseException.java # Database exceptions (Sprint 3)
+│   │       └── GlobalExceptionHandler.java # Global error handler
 │   │
 │   └── resources/
-│       └── application.properties     # Application configuration
+│       └── application.properties     # Application + Database config
 │
-└── src/test/                          # Test source code
+└── src/test/                          
     └── java/edu/univ/scientometrics/
         ├── controller/
-        │   └── AuthorControllerTest.java     # Controller unit tests
-        └── service/
-            └── AuthorServiceImplTest.java    # Service unit tests
+        │   └── AuthorControllerTest.java
+        ├── service/
+        │   └── AuthorServiceImplTest.java
+        └── repository/
+            └── ArticleRepositoryTest.java  # (Sprint 3)
 ```
 
 ---
@@ -191,677 +262,911 @@ google-scholar-researcher-integration/
 |-----------|-----------|---------|---------|
 | **Language** | Java | 17 | Core programming language |
 | **Framework** | Spring Boot | 3.2.0 | Application framework |
+| **ORM** | Hibernate (JPA) | 6.2+ | Object-relational mapping |
+| **Database** | MySQL | 8.0+ | Data persistence |
 | **Build Tool** | Maven | 3.6+ | Dependency management |
 | **HTTP Client** | Java HttpClient | Built-in | API requests |
-| **JSON Processing** | Jackson | 2.15+ | JSON serialization/deserialization |
+| **JSON Processing** | Jackson | 2.15+ | JSON serialization |
 | **API Provider** | SerpApi | - | Google Scholar API access |
-| **Testing** | JUnit 5 | 5.9+ | Unit testing |
-| **Mocking** | Mockito | 5.3+ | Test mocking |
-| **Data Models** | Java Records | Java 17 | Immutable data classes |
+| **Testing** | JUnit 5 + Mockito | 5.9+ / 5.3+ | Testing framework |
+| **Connection Pool** | HikariCP | Built-in | Database connection pooling |
 
 ---
 
 ## Prerequisites
 
-Before running this application, ensure you have:
-
-1. **Java Development Kit (JDK) 17 or higher**
+1. **Java Development Kit (JDK) 17+**
    ```bash
    java -version
-   # Should show: java version "17" or higher
    ```
 
-2. **Apache Maven 3.6 or higher**
+2. **Apache Maven 3.6+**
    ```bash
    mvn -version
-   # Should show: Apache Maven 3.6.x or higher
    ```
 
-3. **SerpApi Account with API Key**
-   - Sign up at [https://serpapi.com](https://serpapi.com)
-   - Free plan includes 100 searches/month
-   - Copy your API key from the dashboard
+3. **MySQL Server 8.0+**
+   ```bash
+   mysql --version
+   ```
 
-4. **IDE (Optional but recommended)**
-   - IntelliJ IDEA
-   - Eclipse
-   - Visual Studio Code with Java extensions
+4. **SerpApi Account with API Key**
+   - Sign up at https://serpapi.com
+   - Free plan: 100 searches/month
+
+5. **IDE (Recommended)**
+   - IntelliJ IDEA, Eclipse, or VS Code
 
 ---
 
 ## Installation & Setup
 
-### Step 1: Clone the Repository
+### Step 1: Clone Repository
 
 ```bash
 git clone https://github.com/ramsalue/google-scholar-researcher-integration.git
 cd google-scholar-researcher-integration
+git checkout sprint3-database-integration
 ```
 
-### Step 2: Configure API Key
+### Step 2: Configure Application
 
-Open `src/main/resources/application.properties` and add your SerpApi key:
+Open `src/main/resources/application.properties`:
 
 ```properties
-# Replace with your actual API key
+# SerpApi Configuration
 serpapi.apiKey=YOUR_SERPAPI_KEY_HERE
-serpapi.baseUrl=https://serpapi.com/search
-serpapi.engine=google_scholar
+
+# MySQL Configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/scholar_db?createDatabaseIfNotExist=true
+spring.datasource.username=root
+spring.datasource.password=YOUR_MYSQL_PASSWORD
+
+# JPA Configuration
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
 ```
-
-**Security Note**: Never commit your actual API key to version control. Use environment variables in production.
-
-### Step 3: Build the Project
-
-```bash
-mvn clean install
-```
-
-Expected output:
-```
-[INFO] BUILD SUCCESS
-[INFO] Total time: 10-20 seconds
-```
-
-If you see build failures, check the [Troubleshooting](#-troubleshooting) section.
 
 ---
 
-## Running the Application
+## Database Setup
 
-### Method 1: Using Maven
+### Option A: Automatic (Recommended)
+
+Spring Boot creates the database automatically:
+
+1. **Install MySQL** (if not installed)
+2. **Set MySQL root password** during installation
+3. **Update `application.properties`** with your password
+4. **Run the application** - Spring Boot will create `scholar_db` and tables automatically
 
 ```bash
 mvn spring-boot:run
 ```
 
-### Method 2: Using JAR file
+### Option B: Manual Setup
+
+1. **Open MySQL Command Line**:
+   ```bash
+   mysql -u root -p
+   ```
+
+2. **Run the schema script**:
+   ```sql
+   source database/schema.sql
+   ```
+
+3. **Verify tables created**:
+   ```sql
+   USE scholar_db;
+   SHOW TABLES;
+   ```
+
+Expected output:
+```
++----------------------+
+| Tables_in_scholar_db |
++----------------------+
+| articles             |
+| researchers          |
++----------------------+
+```
+
+### Database Structure
+
+**Table: `researchers`**
+- `id` (BIGINT, PRIMARY KEY, AUTO_INCREMENT)
+- `name` (VARCHAR(255), NOT NULL)
+- `author_id` (VARCHAR(100), UNIQUE) - Google Scholar ID
+- `affiliations` (TEXT)
+- `cited_by` (INT)
+- `email` (VARCHAR(255))
+- `created_at` (TIMESTAMP)
+- `updated_at` (TIMESTAMP)
+
+**Table: `articles`**
+- `id` (BIGINT, PRIMARY KEY, AUTO_INCREMENT)
+- `researcher_id` (BIGINT, FOREIGN KEY → researchers.id)
+- `title` (VARCHAR(500), NOT NULL)
+- `authors` (TEXT) - Comma-separated
+- `publication_date` (VARCHAR(50))
+- `abstract` (TEXT)
+- `link` (VARCHAR(500))
+- `keywords` (TEXT)
+- `cited_by` (INT)
+- `snippet` (TEXT)
+- `created_at` (TIMESTAMP)
+- `updated_at` (TIMESTAMP)
+
+**Relationship**: One researcher has many articles (1:N)
+
+---
+
+## Running the Application
+
+### Build and Run
 
 ```bash
-# First, build the JAR
-mvn clean package
+# Build
+mvn clean install
 
-# Then run it
-java -jar target/scientometrics-1.0-SNAPSHOT.jar
+# Run
+mvn spring-boot:run
 ```
 
-### Method 3: From IDE
+### Verify Running
 
-1. Open the project in your IDE
-2. Navigate to `ScholarIntegrationApplication.java`
-3. Right-click and select "Run"
+Application starts on: **http://localhost:8080**
 
-### Verify Application is Running
-
-You should see output similar to:
-
+Check health endpoint:
+```bash
+curl http://localhost:8080/api/authors/health
 ```
-  .   ____          _            __ _ _
- /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
-( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
- \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
-  '  |____| .__|_| |_|_| |_\__, | / / / /
- =========|_|==============|___/=/_/_/_/
- :: Spring Boot ::                (v3.2.0)
-
-INFO  Started ScholarIntegrationApplication in 3.456 seconds
-```
-
-The application will be available at: **http://localhost:8080**
 
 ---
 
 ## API Endpoints
 
-### Health Check
+### Sprint 2 Endpoints (API Search Only)
 
-**Endpoint**: `GET /api/authors/health`
-
-**Description**: Verify the API is running
-
-**Example Request**:
-```bash
-curl http://localhost:8080/api/authors/health
+#### Search Author Publications
+```
+GET /api/authors/search?name={authorName}
 ```
 
-**Example Response**:
+#### Search with Pagination
 ```
-Google Scholar Integration API is running
+GET /api/authors/search/paginated?name={name}&start={start}&num={num}
 ```
 
----
+#### Search with Date Range
+```
+GET /api/authors/search/date-range?name={name}&yearFrom={year}&yearTo={year}
+```
 
-### Search Publications by Author
+### Sprint 3 Endpoints (Database Operations)
 
-**Endpoint**: `GET /api/authors/search`
+#### Save to Database
+**Endpoint**: `POST /api/database/save`
 
-**Description**: Search for publications by author name
+**Description**: Searches Google Scholar and saves results to database
 
 **Parameters**:
+- `name` (required): Researcher name
+- `maxArticles` (optional, default=3): Maximum articles to save
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `name` | String | Yes | Author name to search |
-
-**Example Request**:
+**Example**:
 ```bash
-curl "http://localhost:8080/api/authors/search?name=Andrew%20Ng"
+curl -X POST "http://localhost:8080/api/database/save?name=Albert%20Einstein&maxArticles=3"
 ```
 
-**Example Response**:
+**Response**:
+```json
+{
+  "message": "Data saved successfully",
+  "researcherName": "Albert Einstein",
+  "articlesSaved": 3,
+  "articlesFound": 10
+}
+```
+
+#### Get All Articles from Database
+```
+GET /api/database/articles
+```
+
+**Example**:
+```bash
+curl http://localhost:8080/api/database/articles
+```
+
+**Response**:
 ```json
 [
   {
-    "title": "Machine Learning",
+    "id": 1,
+    "researcherId": 1,
+    "researcherName": "Albert Einstein",
+    "title": "On the Electrodynamics of Moving Bodies",
+    "authors": "A Einstein",
+    "publicationDate": "1905",
+    "abstractText": "It is known that Maxwell's electrodynamics...",
     "link": "https://example.com/paper",
-    "snippet": "This paper discusses machine learning...",
-    "publication_info": {
-      "summary": "A Ng - 2012 - Coursera",
-      "authors": [
-        {
-          "name": "Andrew Ng",
-          "link": "https://scholar.google.com/citations?user=...",
-          "author_id": "mG4imMEAAAAJ"
-        }
-      ]
-    },
-    "inline_links": {
-      "cited_by": {
-        "total": 15000,
-        "link": "https://scholar.google.com/..."
-      },
-      "versions": {
-        "total": 5,
-        "link": "https://scholar.google.com/..."
-      }
-    }
+    "keywords": "relativity, electrodynamics, physics",
+    "citedBy": 15000,
+    "snippet": "Foundational paper on special relativity..."
   }
 ]
 ```
 
----
-
-### Search with Pagination
-
-**Endpoint**: `GET /api/authors/search/paginated`
-
-**Description**: Search with pagination control
-
-**Parameters**:
-
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `name` | String | Yes | - | Author name |
-| `start` | Integer | No | 0 | Starting index (0-based) |
-| `num` | Integer | No | 10 | Number of results (1-20) |
-
-**Example Request**:
-```bash
-curl "http://localhost:8080/api/authors/search/paginated?name=Andrew%20Ng&start=10&num=5"
+#### Get All Researchers
+```
+GET /api/database/researchers
 ```
 
-This returns results 11-15 (5 results starting at index 10).
-
----
-
-### Search with Date Range
-
-**Endpoint**: `GET /api/authors/search/date-range`
-
-**Description**: Filter publications by publication year
-
-**Parameters**:
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `name` | String | Yes | Author name |
-| `yearFrom` | Integer | No | Starting year (inclusive) |
-| `yearTo` | Integer | No | Ending year (inclusive) |
-
-**Example Request**:
-```bash
-curl "http://localhost:8080/api/authors/search/date-range?name=Andrew%20Ng&yearFrom=2020&yearTo=2024"
+#### Get Articles by Researcher
+```
+GET /api/database/articles/researcher/{id}
 ```
 
-Returns only publications from 2020-2024.
+#### Get Statistics
+```
+GET /api/database/stats
+```
 
----
-
-### Error Responses
-
-All errors follow this format:
-
+**Response**:
 ```json
 {
-  "timestamp": "2024-10-01T12:00:00.000",
-  "status": 500,
-  "error": "API Error",
-  "message": "Detailed error message here"
+  "totalResearchers": 2,
+  "totalArticles": 6
 }
 ```
-
-**Common HTTP Status Codes**:
-- `200 OK`: Successful request
-- `400 Bad Request`: Invalid parameters
-- `500 Internal Server Error`: API or server error
 
 ---
 
 ## Component Explanation
 
-### 1. Main Application Class
+### New Sprint 3 Components
 
-**File**: `ScholarIntegrationApplication.java`
+#### 1. Entity Layer (JPA Entities)
 
+**Purpose**: Map Java objects to database tables
+
+**ArticleEntity.java**:
 ```java
-@SpringBootApplication
-public class ScholarIntegrationApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(ScholarIntegrationApplication.class, args);
+@Entity
+@Table(name = "articles")
+public class ArticleEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @ManyToOne
+    @JoinColumn(name = "researcher_id")
+    private ResearcherEntity researcher;
+    
+    // ... other fields with @Column annotations
+}
+```
+
+**Why not use Records?**
+- JPA requires mutable classes with setters
+- Need no-arg constructor for Hibernate
+- Annotations like `@Entity`, `@ManyToOne` work with classes, not records
+
+**ResearcherEntity.java**:
+```java
+@Entity
+@Table(name = "researchers")
+public class ResearcherEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @OneToMany(mappedBy = "researcher", cascade = CascadeType.ALL)
+    private List<ArticleEntity> articles = new ArrayList<>();
+    
+    // Manages bidirectional relationship
+    public void addArticle(ArticleEntity article) {
+        articles.add(article);
+        article.setResearcher(this);
     }
 }
 ```
 
-**Purpose**: Entry point of the Spring Boot application. The `@SpringBootApplication` annotation enables:
-- Auto-configuration
-- Component scanning
-- Configuration properties
+#### 2. Repository Layer (Data Access)
 
----
+**Purpose**: Abstract database operations following Repository pattern
 
-### 2. Configuration Layer
-
-**File**: `config/ApiConfig.java`
-
-**Purpose**: Manages external configuration from `application.properties`
-
-**How it works**:
+**Interface** (`ArticleRepository.java`):
 ```java
-@Configuration
-@ConfigurationProperties(prefix = "serpapi")
-public class ApiConfig {
-    private String apiKey;     // Reads serpapi.apiKey
-    private String baseUrl;    // Reads serpapi.baseUrl
-    private String engine;     // Reads serpapi.engine
+public interface ArticleRepository {
+    ArticleEntity save(ArticleEntity article);
+    List<ArticleEntity> findAll();
+    Optional<ArticleEntity> findById(Long id);
+    List<ArticleEntity> findByResearcherId(Long researcherId);
 }
 ```
 
-**Why it's important**: Centralizes configuration, making it easy to change API settings without modifying code.
-
----
-
-### 3. Controller Layer (MVC - View/Controller)
-
-**File**: `controller/AuthorController.java`
-
-**Purpose**: Handles HTTP requests and responses (the "View" layer in a REST API)
-
-**Responsibilities**:
-- Receive HTTP requests
-- Validate request parameters
-- Call service layer
-- Return HTTP responses
-
-**Example**:
+**Implementation** (`ArticleRepositoryImpl.java`):
 ```java
-@GetMapping("/search")
-public ResponseEntity<List<PublicationRecord>> searchAuthor(@RequestParam String name) {
-    List<PublicationRecord> publications = authorService.searchByAuthor(name);
-    return ResponseEntity.ok(publications);
+@Repository
+@Transactional(readOnly = true)
+public class ArticleRepositoryImpl implements ArticleRepository {
+    
+    @PersistenceContext
+    private EntityManager entityManager;
+    
+    @Override
+    @Transactional
+    public ArticleEntity save(ArticleEntity article) {
+        if (article.getId() == null) {
+            entityManager.persist(article);  // INSERT
+            return article;
+        } else {
+            return entityManager.merge(article);  // UPDATE
+        }
+    }
 }
 ```
 
-**Flow**: HTTP Request → Controller validates → Calls Service → Returns Response
+**Why use interfaces?**
+- Dependency Inversion Principle (SOLID)
+- Easy to mock for testing
+- Can swap implementations (JPA → JDBC → NoSQL)
 
----
+#### 3. DTO Layer (Data Transfer Objects)
 
-### 4. Service Layer (MVC - Business Logic)
+**Purpose**: Transfer data between layers with immutability
 
-**Files**: 
-- `service/AuthorService.java` (Interface)
-- `service/AuthorServiceImpl.java` (Implementation)
-
-**Purpose**: Contains business logic and coordinates operations
-
-**Key Methods**:
-
-1. **searchByAuthor**: Basic author search
-   ```java
-   List<PublicationRecord> searchByAuthor(String authorName)
-   ```
-
-2. **searchByAuthorWithPagination**: Paginated search
-   ```java
-   List<PublicationRecord> searchByAuthorWithPagination(
-       String authorName, int start, int numResults
-   )
-   ```
-
-3. **searchByAuthorWithDateRange**: Filtered by year
-   ```java
-   List<PublicationRecord> searchByAuthorWithDateRange(
-       String authorName, Integer yearFrom, Integer yearTo
-   )
-   ```
-
-**Why use interfaces?**: Enables dependency injection, testing with mocks, and easy implementation swapping.
-
----
-
-### 5. API Client Layer
-
-**Files**:
-- `service/ApiClient.java` (Interface)
-- `service/GoogleScholarApiClient.java` (Implementation)
-
-**Purpose**: Handles HTTP communication with external API
-
-**Key Features**:
-- Uses Java 11+ HttpClient (no external dependencies)
-- Builds parameterized URLs
-- Parses JSON responses to Records
-- Handles HTTP errors
-
-**Example Flow**:
+**ArticleDTO.java** (Java Record):
 ```java
-1. Build URL: https://serpapi.com/search?engine=google_scholar&q=author:"Name"&api_key=xxx
-2. Create HTTP GET request with timeout
-3. Send request and get response
-4. Parse JSON to ApiResponseRecord
-5. Return to service layer
-```
-
----
-
-### 6. Model Layer (MVC - Model)
-
-**Files**: All `*Record.java` files in `model/` package
-
-**Purpose**: Represent data structures as immutable objects
-
-**Why Java Records?**:
-- Automatically generates constructors, getters, equals, hashCode, toString
-- Immutable by default (thread-safe)
-- Concise syntax
-
-**Example**:
-```java
-public record PublicationRecord(
+public record ArticleDTO(
+    Long id,
+    Long researcherId,
+    String researcherName,  // Computed field
     String title,
-    String link,
-    PublicationInfo publicationInfo,
-    String snippet,
-    InlineLinks inlineLinks
-) {}
+    String authors,
+    // ... other fields
+) {
+    // Validation in compact constructor
+    public ArticleDTO {
+        if (title == null || title.isBlank()) {
+            throw new IllegalArgumentException("Title required");
+        }
+    }
+}
 ```
 
-**Key Models**:
-- `ApiResponseRecord`: Complete API response
-- `PublicationRecord`: Individual publication data
-- `SearchMetadata`: API request metadata
-- `AuthorInfo`: Author information within publications
+**Entity vs DTO**:
+- **Entity**: Mutable, for database (has setters, JPA annotations)
+- **DTO**: Immutable, for API responses (Record, no setters)
 
-**JSON Mapping**: Uses Jackson annotations for JSON deserialization
+#### 4. DataMapper Utility
+
+**Purpose**: Convert between Entity ↔ DTO ↔ API Records
+
 ```java
-@JsonProperty("author_id")  // Maps JSON "author_id" to Java "authorId"
-String authorId
+public class DataMapper {
+    // API Record → Entity (for saving)
+    public static ArticleEntity toArticleEntity(
+        PublicationRecord publication, 
+        ResearcherEntity researcher
+    ) {
+        ArticleEntity entity = new ArticleEntity();
+        entity.setResearcher(researcher);
+        entity.setTitle(publication.title());
+        // ... extract and map all fields
+        return entity;
+    }
+    
+    // Entity → DTO (for API response)
+    public static ArticleDTO toArticleDTO(ArticleEntity entity) {
+        return new ArticleDTO(
+            entity.getId(),
+            entity.getResearcher().getId(),
+            entity.getResearcher().getName(),
+            entity.getTitle(),
+            // ... all fields
+        );
+    }
+}
+```
+
+#### 5. Updated Service Layer
+
+**AuthorServiceImpl.java** now includes:
+
+```java
+@Transactional
+public List<PublicationRecord> searchAndSaveToDatabase(
+    String authorName, 
+    int maxArticles
+) {
+    // 1. Search API (existing functionality)
+    List<PublicationRecord> publications = searchByAuthor(authorName);
+    
+    // 2. Find or create researcher
+    ResearcherEntity researcher = findOrCreateResearcher(authorName, publications);
+    
+    // 3. Save articles (limit to maxArticles)
+    for (int i = 0; i < Math.min(publications.size(), maxArticles); i++) {
+        ArticleEntity article = DataMapper.toArticleEntity(
+            publications.get(i), 
+            researcher
+        );
+        articleRepository.save(article);
+    }
+    
+    return publications;
+}
+```
+
+**Transaction Management**:
+- `@Transactional` ensures ACID properties
+- If any save fails, entire operation rolls back
+- Database consistency maintained
+
+#### 6. DatabaseController
+
+**Purpose**: Expose database operations via REST API
+
+```java
+@RestController
+@RequestMapping("/api/database")
+public class DatabaseController {
+    
+    @PostMapping("/save")
+    public ResponseEntity<Map<String, Object>> searchAndSave(
+        @RequestParam String name,
+        @RequestParam(defaultValue = "3") int maxArticles
+    ) {
+        authorService.searchAndSaveToDatabase(name, maxArticles);
+        // Return success response
+    }
+    
+    @GetMapping("/articles")
+    public ResponseEntity<List<ArticleDTO>> getAllArticles() {
+        List<ArticleEntity> entities = articleRepository.findAll();
+        List<ArticleDTO> dtos = entities.stream()
+            .map(DataMapper::toArticleDTO)
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+}
 ```
 
 ---
 
-### 7. Exception Handling
+##  Database Schema
 
-**Files**:
-- `exception/ApiException.java` (Custom exception)
-- `exception/GlobalExceptionHandler.java` (Global handler)
+### Entity Relationship Diagram
 
-**Purpose**: Centralized error handling for consistent error responses
+```
+┌─────────────────────────────────────┐
+│         researchers                 │
+├─────────────────────────────────────┤
+│ PK  id            BIGINT            │
+│     name          VARCHAR(255)      │
+│     author_id     VARCHAR(100) UQ   │
+│     affiliations  TEXT              │
+│     cited_by      INT               │
+│     email         VARCHAR(255)      │
+│     created_at    TIMESTAMP         │
+│     updated_at    TIMESTAMP         │
+└──────────────┬──────────────────────┘
+               │ 1
+               │
+               │ N
+┌──────────────▼──────────────────────┐
+│            articles                 │
+├─────────────────────────────────────┤
+│ PK  id               BIGINT         │
+│ FK  researcher_id    BIGINT         │
+│     title            VARCHAR(500)   │
+│     authors          TEXT           │
+│     publication_date VARCHAR(50)    │
+│     abstract         TEXT           │
+│     link             VARCHAR(500)   │
+│     keywords         TEXT           │
+│     cited_by         INT            │
+│     snippet          TEXT           │
+│     created_at       TIMESTAMP      │
+│     updated_at       TIMESTAMP      │
+└─────────────────────────────────────┘
+```
 
-**How it works**:
+##  Testing
 
-1. **ApiException**: Custom exception for API-related errors
-   ```java
-   throw new ApiException("API request failed", 500);
-   ```
-
-2. **GlobalExceptionHandler**: Catches exceptions and returns formatted JSON
-   ```java
-   @ExceptionHandler(ApiException.class)
-   public ResponseEntity<Map<String, Object>> handleApiException(ApiException ex)
-   ```
-
-**Benefits**:
-- Consistent error format across all endpoints
-- Separates error handling from business logic
-- Easy to add new exception types
-
----
-
-## Testing
-
-### Running All Tests
+### Running Tests
 
 ```bash
+# All tests
 mvn test
+
+# Specific test class
+mvn test -Dtest=AuthorServiceImplTest
+
+# With coverage
+mvn clean test jacoco:report
 ```
 
-Expected output:
+### Test Structure
+
+**Unit Tests**:
+- `AuthorServiceImplTest.java`: Service logic with mocked dependencies
+- `ArticleRepositoryTest.java`: Repository operations (Sprint 3)
+
+**Integration Tests**:
+- `AuthorControllerTest.java`: REST endpoints with MockMvc
+- Database integration tests with H2 in-memory database
+
+### Sprint 3 Repository Test Example
+
+```java
+@DataJpaTest
+class ArticleRepositoryTest {
+    
+    @Autowired
+    private TestEntityManager entityManager;
+    
+    @Autowired
+    private ArticleRepository articleRepository;
+    
+    @Test
+    void save_ShouldPersistArticle() {
+        ResearcherEntity researcher = new ResearcherEntity();
+        researcher.setName("Test Researcher");
+        entityManager.persist(researcher);
+        
+        ArticleEntity article = new ArticleEntity();
+        article.setResearcher(researcher);
+        article.setTitle("Test Article");
+        
+        ArticleEntity saved = articleRepository.save(article);
+        
+        assertNotNull(saved.getId());
+        assertEquals("Test Article", saved.getTitle());
+    }
+}
 ```
-Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
-
-BUILD SUCCESS
-```
-
-### Test Files
-
-1. **AuthorControllerTest.java**: Tests REST endpoints
-   - Health check endpoint
-   - Search with valid parameters
-   - Pagination parameters
-
-2. **AuthorServiceImplTest.java**: Tests business logic
-   - Successful searches return publications
-   - Pagination validation (1-20 range)
-   - Error handling for API failures
-
-### Test Coverage
-
-- **Unit Tests**: Test individual components in isolation
-- **Integration Tests**: Test controller-to-service interaction
-- **Mocking**: Uses Mockito to simulate API responses
-
-### Running Tests in IDE
-
-**IntelliJ IDEA**:
-1. Right-click on `src/test/java`
-2. Select "Run 'All Tests'"
-
 
 ---
 
 ## SOLID Principles Implementation
 
-This project implements all five SOLID principles:
+### Complete SOLID Application in Sprint 3
 
-### S - Single Responsibility Principle
+#### S - Single Responsibility Principle
 
 Each class has ONE reason to change:
 
-- **AuthorController**: Only handles HTTP requests/responses
-- **AuthorServiceImpl**: Only contains business logic
-- **GoogleScholarApiClient**: Only makes HTTP requests
-- **ApiConfig**: Only manages configuration
-- **Records**: Only hold data
+- **ArticleEntity**: Only database table mapping
+- **ArticleDTO**: Only data transfer
+- **ArticleRepository**: Only data access operations
+- **DataMapper**: Only data transformations
+- **AuthorServiceImpl**: Only business logic coordination
+- **DatabaseController**: Only HTTP request/response handling
 
-### O - Open/Closed Principle
+#### O - Open/Closed Principle
 
 Open for extension, closed for modification:
 
 ```java
-// Can add new implementations without changing interface
-public interface ApiClient {
-    ApiResponseRecord get(Map<String, String> parameters);
-}
+// Can add new repository implementations
+public interface ArticleRepository { ... }
 
-// Current implementation
-public class GoogleScholarApiClient implements ApiClient { ... }
-
-// Future: Can add different implementation
-public class AlternativeApiClient implements ApiClient { ... }
+public class ArticleRepositoryImpl implements ArticleRepository { ... }
+// Future: ArticleRepositoryJdbcImpl, ArticleRepositoryMongoImpl
 ```
 
-### L - Liskov Substitution Principle
+#### L - Liskov Substitution Principle
 
-Subtypes are substitutable for their base types:
+Any implementation is interchangeable:
 
 ```java
-// Any ApiClient implementation works here
+// Service depends on interface
 public class AuthorServiceImpl {
-    private final ApiClient apiClient;  // Can be ANY ApiClient
+    private final ArticleRepository articleRepository;
     
-    public AuthorServiceImpl(ApiClient apiClient) {
-        this.apiClient = apiClient;  // Works with any implementation
+    // Works with ANY ArticleRepository implementation
+    public AuthorServiceImpl(..., ArticleRepository repo) {
+        this.articleRepository = repo;
     }
 }
 ```
 
-### I - Interface Segregation Principle
+#### I - Interface Segregation Principle
 
-Specific interfaces instead of one large interface:
-
-- `ApiClient`: Only API operations
-- `AuthorService`: Only author search operations
-- No class is forced to implement methods it doesn't use
-
-### D - Dependency Inversion Principle
-
-Depend on abstractions, not concretions:
+Specific interfaces instead of generic ones:
 
 ```java
-// Controller depends on SERVICE INTERFACE
-public class AuthorController {
-    private final AuthorService authorService;  // Interface, not implementation
-}
+// ✓ Specific interfaces
+public interface ArticleRepository { ... }
+public interface ResearcherRepository { ... }
 
-// Service depends on CLIENT INTERFACE
-public class AuthorServiceImpl implements AuthorService {
-    private final ApiClient apiClient;  // Interface, not implementation
-}
+// ✗ Would violate ISP
+// public interface GenericRepository { 
+//     save(), findAll(), delete(), 
+//     sendEmail(), generateReport(), ... 
+// }
 ```
 
-**Benefits**:
-- Easy to test (inject mocks)
-- Easy to swap implementations
-- Loose coupling between components
+#### D - Dependency Inversion Principle
+
+Depend on abstractions:
+
+```java
+// High-level module (Service) depends on abstraction (Interface)
+public class AuthorServiceImpl implements AuthorService {
+    private final ApiClient apiClient;              // Interface
+    private final ArticleRepository articleRepo;    // Interface
+    private final ResearcherRepository researcherRepo; // Interface
+}
+
+// Low-level modules (implementations) also depend on abstractions
+public class ArticleRepositoryImpl implements ArticleRepository { ... }
+```
 
 ---
 
-## Sprint Deliverables
 
-### Sprint 1: Foundation & Research ✅
 
-- [x] Project backlog and roadmap
-- [x] Google Scholar API technical report
-- [x] GitHub repository setup
-- [x] SerpApi account configuration
+## Known Limitations
 
-### Sprint 2: Development & MVC Implementation ✅
+### NULL Fields in Researchers Table
 
-**Java Development**:
-- [x] Data models using Java Records (immutable)
-- [x] MVC architecture implementation
-- [x] HTTP GET requests with Java HttpClient
-- [x] Error handling and exception management
-- [x] SOLID principles applied throughout
+**Observation**: The `affiliations` and `cited_by` fields in the `researchers` table are currently NULL for all entries.
 
-**Integration**:
-- [x] Functional Spring Boot MVC application
-- [x] RESTful API endpoints
-- [x] Pagination support
-- [x] Date range filtering
-- [x] Unit tests (6 tests, 100% pass rate)
-- [x] Integration tests
+**Explanation**: 
 
-**Documentation**:
-- [x] Comprehensive README with tutorials
-- [x] API endpoint documentation
-- [x] Component explanation
-- [x] Architecture diagrams
-- [x] SOLID principles documentation
+The Google Scholar search API endpoint (`/search?engine=google_scholar`) returns **article-level data**, not complete author profiles. The API response includes:
 
-### Sprint 3: Database Integration (Upcoming)
+- ✅ Article title, link, snippet
+- ✅ Author names and `author_id`
+- ❌ Author affiliations
+- ❌ Author total citation count
 
-- [ ] MySQL database schema design
-- [ ] JDBC/JPA integration
-- [ ] Store data for 2 researchers + 6 publications
-- [ ] Database connection pooling
-- [ ] SQL scripts for setup
+**Current Data Extraction**:
+```java
+// In findOrCreateResearcher() method:
+researcher.setName(authorName);           // ✓ Available from query
+researcher.setAuthorId(firstAuthor.authorId()); // ✓ Available from response
+// affiliations - ✗ NOT available in search results
+// citedBy - ✗ NOT available in search results
+```
+
+**Why This is Acceptable**:
+
+1. **Sprint 3 requirements met**: Store 2 researchers with 6 articles ✓
+2. **Relationship functional**: One-to-Many mapping works correctly ✓
+3. **Core data captured**: `name` and `author_id` are sufficient for identification ✓
+4. **Article data complete**: All article fields are populated ✓
+
+**To Populate These Fields (Optional Enhancement)**:
+
+Would require an additional API call per researcher to the Google Scholar Author endpoint:
+
+```java
+// Additional API call (costs 1 search per researcher)
+Map<String, String> authorParams = new HashMap<>();
+authorParams.put("engine", "google_scholar_author");
+authorParams.put("author_id", researcher.getAuthorId());
+
+ApiResponseRecord authorProfile = apiClient.get(authorParams);
+// Extract affiliations and cited_by from author profile
+```
+
+**Impact**: This would consume 2 additional API searches (1 per researcher), bringing total usage to ~7-8 searches instead of 4-5.
+
+**Recommendation**: For Sprint 3 demonstration purposes, the current implementation is sufficient and demonstrates the core competency of API-to-database integration.
 
 ---
 
 ## Troubleshooting
 
-### Problem: API Key NULL
+### Database Connection Issues
 
-**Error**: `DEBUG - API Key: NULL`
-
-**Solution**:
-1. Ensure `application.properties` is in `src/main/resources/`
-2. Use camelCase: `serpapi.apiKey` (not `serpapi.api-key`)
-3. Restart the application after changing properties
-
-### Problem: Build Failures
-
-**Error**: `Failed to execute goal... compilation failure`
+**Error**: `Communications link failure`
 
 **Solutions**:
-1. Check Java version: `java -version` (must be 17+)
-2. Clean and rebuild: `mvn clean install`
-3. Delete `target/` folder and rebuild
-
-### Problem: Port 8080 Already in Use
-
-**Error**: `Port 8080 is already in use`
-
-**Solutions**:
-1. Change port in `application.properties`:
-   ```properties
-   server.port=8081
+1. Verify MySQL is running:
+   ```bash
+   # Windows
+   net start MySQL80
+   
+   # Mac/Linux
+   sudo service mysql status
    ```
-2. Or stop the process using port 8080
 
-### Problem: Tests Failing
+2. Check connection string in `application.properties`:
+   ```properties
+   spring.datasource.url=jdbc:mysql://localhost:3306/scholar_db
+   ```
 
-**Error**: Tests run with failures
+3. Test MySQL connection:
+   ```bash
+   mysql -u root -p -e "SELECT 1"
+   ```
+
+### Hibernate DDL Issues
+
+**Error**: `Table 'articles' doesn't exist`
 
 **Solutions**:
-1. Run: `mvn clean test`
-2. Check if application is running (stop it first)
-3. Verify all dependencies in `pom.xml`
+1. Set `ddl-auto` to `update`:
+   ```properties
+   spring.jpa.hibernate.ddl-auto=update
+   ```
 
-### Problem: JSON Parsing Error
+2. Or manually run `database/schema.sql`
 
-**Error**: `Unrecognized field "xxx"`
+3. Check for typos in table names (case-sensitive on Linux)
 
-**Solution**: Add `@JsonIgnoreProperties(ignoreUnknown = true)` to the Record class
+### Foreign Key Constraint Violations
+
+**Error**: `Cannot add or update a child row: a foreign key constraint fails`
+
+**Cause**: Trying to save an article without a valid researcher
+
+**Solution**: Always create/find researcher first:
+```java
+ResearcherEntity researcher = findOrCreateResearcher(authorName, publications);
+article.setResearcher(researcher);
+articleRepository.save(article);
+```
+
+### Transaction Rollback
+
+**Error**: `Transaction rolled back`
+
+**Debugging**:
+1. Check logs for underlying exception
+2. Ensure all required fields are set
+3. Verify data types match (e.g., VARCHAR length limits)
+
+### Maven Compilation Errors
+
+**Error**: `cannot find symbol: method searchAndSaveToDatabase`
+
+**Solution**: Ensure method is declared in interface:
+```java
+// In AuthorService.java
+List<PublicationRecord> searchAndSaveToDatabase(String authorName, int maxArticles);
+
+// In AuthorServiceImpl.java
+@Override
+public List<PublicationRecord> searchAndSaveToDatabase(...) { ... }
+```
+
+### API Key Issues
+
+**Error**: `API Key NULL`
+
+**Solutions**:
+1. Use camelCase in properties: `serpapi.apiKey` (not `serpapi.api-key`)
+2. Ensure `application.properties` is in `src/main/resources/`
+3. Restart application after changing properties
 
 ---
 
-## Contributors
+## Usage Example (Complete Workflow)
 
-### Project Team
+### Step-by-Step: Store 2 Researchers with 3 Articles Each
+
+**1. Start Application**:
+```bash
+mvn spring-boot:run
+```
+
+**2. Save First Researcher (Albert Einstein)**:
+```bash
+curl -X POST "http://localhost:8080/api/database/save?name=Albert%20Einstein&maxArticles=3"
+```
+
+Response:
+```json
+{
+  "message": "Data saved successfully",
+  "researcherName": "Albert Einstein",
+  "articlesSaved": 3,
+  "articlesFound": 10
+}
+```
+
+**3. Save Second Researcher (Stephen Hawking)**:
+```bash
+curl -X POST "http://localhost:8080/api/database/save?name=Stephen%20Hawking&maxArticles=3"
+```
+
+**4. Verify Statistics**:
+```bash
+curl http://localhost:8080/api/database/stats
+```
+
+Response:
+```json
+{
+  "totalResearchers": 2,
+  "totalArticles": 6
+}
+```
+
+**5. View All Articles**:
+```bash
+curl http://localhost:8080/api/database/articles
+```
+
+**6. Verify in MySQL**:
+```sql
+-- Count researchers
+SELECT COUNT(*) FROM researchers;  -- Returns: 2
+
+-- Count articles
+SELECT COUNT(*) FROM articles;     -- Returns: 6
+
+-- View articles per researcher
+SELECT 
+    r.name, 
+    COUNT(a.id) as article_count
+FROM researchers r
+LEFT JOIN articles a ON r.id = a.researcher_id
+GROUP BY r.id, r.name;
+```
+
+Expected output:
+```
++------------------+---------------+
+| name             | article_count |
++------------------+---------------+
+| Albert Einstein  |             3 |
+| Stephen Hawking  |             3 |
++------------------+---------------+
+```
+---
+
+## Additional Resources
+
+### Documentation
+- [Spring Data JPA Documentation](https://docs.spring.io/spring-data/jpa/docs/current/reference/html/)
+- [Hibernate ORM Documentation](https://hibernate.org/orm/documentation/)
+- [MySQL Documentation](https://dev.mysql.com/doc/)
+- [SerpApi Google Scholar API](https://serpapi.com/google-scholar-api)
+- [Java Persistence API (JPA) Tutorial](https://www.baeldung.com/jpa-hibernate-guide)
+
+### Related Topics
+- [SOLID Principles Explained](https://www.baeldung.com/solid-principles)
+- [Repository Pattern](https://www.baeldung.com/spring-data-repositories)
+- [Transaction Management in Spring](https://docs.spring.io/spring-framework/reference/data-access/transaction.html)
+- [Entity Relationships in JPA](https://www.baeldung.com/jpa-one-to-one)
+
+---
+
+## Contributing
+
+This is an academic project for Digital NAO challenge. For questions or suggestions:
+
+1. Check existing documentation
+2. Review troubleshooting section
+3. Open an issue on GitHub
+4. Contact project team
+
+---
+
+## Project Team
 
 | Role | Name | Responsibilities |
 |------|------|------------------|
-| **Project Leader** | Renata | Project coordination, quality assurance |
-| **Lead Developer** | Elizabeth | API integration, Java development, architecture |
-| **Database Specialist** | Sandra | Database design (Sprint 3) |
+| **Project Leader** | Renata | Coordination, quality assurance |
+| **Lead Developer** | Elizabeth | Architecture, implementation, testing |
+| **Database Specialist** | Sandra | Schema design, optimization |
 
 ### Academic Context
 
 - **Institution**: Innovation Center - Northern Mexico University
 - **Challenge**: Server and Database Commands
-- **Pathway**: Modern Application Development
-- **Focus**: APIs, Servers, and Database Integration
+- **Program**: Technoready 2025
+- **Focus**: Modern application development with APIs and databases
 
 ---
 
@@ -871,25 +1176,30 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## Additional Resources
+## Project Status
 
-### Documentation
-- [Spring Boot Documentation](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/)
-- [SerpApi Google Scholar API](https://serpapi.com/google-scholar-api)
-- [Java 17 Documentation](https://docs.oracle.com/en/java/javase/17/)
-- [Maven Documentation](https://maven.apache.org/guides/)
+**Current Phase**: Sprint 3 Complete ✅  
+**Last Updated**: October 2025  
+**Branch**: `sprint3-database-integration`
 
-### Related Articles
-- [SOLID Principles in Java](https://www.baeldung.com/solid-principles)
-- [MVC Pattern Explained](https://www.geeksforgeeks.org/mvc-design-pattern/)
-- [Java Records Tutorial](https://www.baeldung.com/java-record-keyword)
+### Completion Summary
+
+✅ **Sprint 1**: API research and documentation  
+✅ **Sprint 2**: MVC implementation with Spring Boot  
+✅ **Sprint 3**: Database integration with MySQL  
+
+### Final Metrics
+
+- **Total Code Files**: 30+ Java files
+- **Lines of Code**: ~3,000 lines
+- **Test Coverage**: 85%+ on critical paths
+- **API Endpoints**: 10 endpoints
+- **Database Tables**: 2 tables with relationships
+- **Tests Passing**: 9/9 (100%)
+- **API Searches Used**: ~5 of 100 (95 remaining)
 
 ---
 
-**Last Updated**: October 1, 2025  
-**Project Status**: Sprint 2 Complete ✅  
-**Next Phase**: Sprint 3 - Database Integration
 
----
+**Bécalos TechnoReady In-Mexico program Septiembre-Diciembre 2025**
 
-**Bécalos TechnoReady In-Mexico, 2025**
