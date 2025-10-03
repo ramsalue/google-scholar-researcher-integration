@@ -17,4 +17,13 @@ public interface AuthorService {
             Integer yearFrom,
             Integer yearTo
     );
+
+    /**
+     * Searches for author publications and saves them to database.
+     *
+     * @param authorName Name of the author to search
+     * @param maxArticles Maximum number of articles to save
+     * @return List of publications from API
+     */
+    List<PublicationRecord> searchAndSaveToDatabase(String authorName, int maxArticles);
 }
