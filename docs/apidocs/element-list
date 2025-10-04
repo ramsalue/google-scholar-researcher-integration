@@ -1,0 +1,10 @@
+edu.univ.scientometrics
+edu.univ.scientometrics.config
+edu.univ.scientometrics.controller
+edu.univ.scientometrics.dto
+edu.univ.scientometrics.entity
+edu.univ.scientometrics.exception
+edu.univ.scientometrics.model
+edu.univ.scientometrics.repository
+edu.univ.scientometrics.service
+edu.univ.scientometrics.util
